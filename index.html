@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Multi-Student Grade System</title>
+
+<style>
+    body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: 'Segoe UI', sans-serif;
+        background: linear-gradient(135deg, #6a6adf, #7a5fbf);
+    }
+
+    .container {
+        background: white;
+        width: 500px;
+        padding: 30px;
+        border-radius: 18px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        text-align: center;
+    }
+
+    input {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        font-size: 15px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+    }
+
+    .row {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    button {
+        padding: 8px 14px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        color: white;
+        font-size: 14px;
+    }
+
+    .copy { background: #2f855a; }
+    .next { background: #4c51bf; }
+    .download { background: #3182ce; }
+    .reset { background: #805ad5; }
+    .undo { background: #f6ad55; }
+    .clear { background: #e53e3e; }
+
+    ul {
+        max-height: 120px;
+        overflow-y: auto;
+        text-align: left;
+        padding-left: 20px;
+    }
+
+    .info {
+        font-weight: bold;
+        margin: 10px 0;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Student Grade System</h2>
+
+    <input type="number" id="studentCountInput" placeholder="Number of students">
+
+    <div class="info" id="studentInfo">Student: 1</div>
+
+    <input type="number" id="gradeInput" placeholder="Enter grade and press Enter">
+
+    <ul id="gradeList"></ul>
+
+    <div class="info" id="totalDisplay">Total: 0</div>
+
+    <div class="row">
+        <button class="copy" onclick="copyTotal()">Copy</button>
+        <button class="next" onclick="nextStudent()">Next</button>
+        <button class="download" onclick="downloadExcel()">Download</button>
+        <button class="reset" onclick="resetAll()">New Set</button>
+    </div>
+
+    <div class="row">
+        <button class="undo" onclick="undoGrade()">Undo</button>
+        <button class="clear" onclick="clearGrades()">Clear</button>
+    </div>
+</div>
+
+<script>
+    let totalStudents = 0;
+    let currentStudent = 1;
+
+    let grades = [];
+    let total = 0;
+
+    let studentTotals = [];
+
+    const studentCountInput = document.getElementById("studentCountInput");
+    const gradeInput = document.getElementById("gradeInput");
+    const gradeList = document.getElementById("gradeList");
+    const totalDisplay = document.getElementById("totalDisplay");
+    const studentInfo = document.getElementById("studentInfo");
+
+    gradeInput.addEventListener("keydown", e => {
+        if (e.key === "Enter") addGrade();
+    });
+
+    function addGrade() {
+        const value = parseInt(gradeInput.value);
+        if (isNaN(value)) return;
+
+        grades.push(value);
+        total += value;
+
+        const li = document.createElement("li");
+        li.textContent = value;
+        gradeList.appendChild(li);
+
+        updateTotal();
+        gradeInput.value = "";
+    }
+
+    function updateTotal() {
+        totalDisplay.textContent = "Total: " + total;
+    }
+
+    function undoGrade() {
+        if (grades.length === 0) return;
+
+        total -= grades.pop();
+        gradeList.removeChild(gradeList.lastElementChild);
+        updateTotal();
+    }
+
+    function clearGrades() {
+        grades = [];
+        total = 0;
+        gradeList.innerHTML = "";
+        updateTotal();
+    }
+
+    function nextStudent() {
+        if (studentCountInput.value === "") {
+            alert("Enter number of students first.");
+            return;
+        }
+
+        totalStudents = parseInt(studentCountInput.value);
+        studentTotals.push(total);
+
+        if (currentStudent >= totalStudents) {
+            alert("All students recorded.");
+            return;
+        }
+
+        currentStudent++;
+        studentInfo.textContent = "Student: " + currentStudent;
+        clearGrades();
+    }
+
+    function copyTotal() {
+        navigator.clipboard.writeText(total.toString());
+    }
+
+    function downloadExcel() {
+        if (studentTotals.length === 0) return;
+
+        let csv = "Student,Total Grade\n";
+        studentTotals.forEach((t, i) => {
+            csv += `Student ${i + 1},${t}\n`;
+        });
+
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "student_grades.csv";
+        a.click();
+
+        URL.revokeObjectURL(url);
+    }
+
+    function resetAll() {
+        totalStudents = 0;
+        currentStudent = 1;
+        grades = [];
+        total = 0;
+        studentTotals = [];
+
+        studentCountInput.value = "";
+        gradeList.innerHTML = "";
+        updateTotal();
+        studentInfo.textContent = "Student: 1";
+        gradeInput.value = "";
+        gradeInput.focus();
+    }
+</script>
+
+</body>
+</html>
